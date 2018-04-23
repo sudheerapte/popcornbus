@@ -1,9 +1,9 @@
 "use strict";
 
 /**
-   sse - use the Server-Sent Events WC standard.
+   sse - use the Server-Sent Events W3C standard.
 
-   https://www.w.org/TR/eventsource/
+   https://www.w3.org/TR/eventsource/
 
    Can parse events, or send "message" events, using streams.
 
@@ -32,7 +32,7 @@
       lastEventId: a number, not useful for our case
       data: newline-separated data lines if more than one.
 
-   The meanings of these attributes are explained in the WC SSE
+   The meanings of these attributes are explained in the W3C SSE
    standard.
 
    Sending messages:
@@ -76,37 +76,37 @@ class SSEventEmitter extends EventEmitter {
     if (! this.writeStream) { return; }
     log(`sendEvent sending ${JSON.stringify(e)}`);
     let buf = "";
-    buf += `event: ${e.type}n`;
+    buf += `event: ${e.type}\n`;
     if (e.lastEventId) {
-      buf += `lastEventId: ${e.lastEventId}n`;
+      buf += `lastEventId: ${e.lastEventId}\n`;
     }
-    let lines = e.data.split(/n|rn/);
+    let lines = e.data.split(/\n|\r\n/);
     lines.forEach( line => {
-      buf += `data: ${line}n`;
+      buf += `data: ${line}\n`;
     });
-    this.writeStream.write(`${buf}n`);
+    this.writeStream.write(`${buf}\n`);
   }
 
   sendMessage(s) {
     if (! s) { return; }
-    if (s.trim().length <= ) { return; }
+    if (s.trim().length <= 0) { return; }
     this.sendEvent({type: "message", data: s});
   }
 
   consumeData(data) {
     const str = ""+data;
-    if (str.length < ) { return; }
+    if (str.length < 1) { return; }
 
-    const lines = str.split(/n|rn/);
+    const lines = str.split(/\n|\r\n/);
     lines.forEach( (line, i) => {
-      const lastLine = (i === lines.length -) ? true : false;
+      const lastLine = (i === lines.length -1) ? true : false;
 
       // When the input is newline-terminated, then the "split" will
       // create an extra, empty last line.  If the last line is not
       // empty, then we know it is a fragment, so we need its contents.
 
       if (lastLine) {
-        if (line.length > ) {
+        if (line.length > 0) {
           this.fragment += line;
         }
         return; // otherwise the last line is meaningless.
@@ -117,11 +117,11 @@ class SSEventEmitter extends EventEmitter {
       line = this.fragment + line;
       this.fragment = "";
 
-      if (line.length === ) { // the end of an event.
+      if (line.length === 0) { // the end of an event.
         this.dispatchEvent();
       } else if (line.startsWith(":")) { // empty keyword: ignore
         return;
-      } else if (line.indexOf(":") >= ) { // "key: value" format
+      } else if (line.indexOf(":") >= 0) { // "key: value" format
 	this.processFieldLine(line);
       } else {
         this.processEmptyFieldLine(line);
@@ -130,15 +130,15 @@ class SSEventEmitter extends EventEmitter {
   }
   processFieldLine(line) {
     const pos = line.indexOf(":");
-    if ( pos < ) { err("impossible!") }
-    const field = line.slice(, pos);
-    let value = line.slice(pos+);
-    if (value.length > ) {
-      if (value[] === " ") { value = value.slice(); }
+    if ( pos < 0) { err("impossible!") }
+    const field = line.slice(0, pos);
+    let value = line.slice(pos+1);
+    if (value.length > 0) {
+      if (value[0] === " ") { value = value.slice(1); }
     }
     switch(field) {
     case "event": this.currEventType = value; this.currData = ""; break;
-    case "data": this.currData += value + "n"; break;
+    case "data": this.currData += value + "\n"; break;
     case "id" : this.lastEventId = value; break;
     case "retry": /* ignore */ ; break;
     default: /* ignore */;
@@ -150,8 +150,8 @@ class SSEventEmitter extends EventEmitter {
   dispatchEvent() {
     // Remove trailing newline if any
     const len = this.currData.length;
-    if (len > && this.currData[len-] === 'n') {
-      this.currData = this.currData.slice(, len-);
+    if (len >0 && this.currData[len-1] === '\n') {
+      this.currData = this.currData.slice(0, len-1);
     }
     // if (! this.currData) { this.currEventType = ""; return; }
     let ev = { type: "message", data: this.currData };

@@ -62,7 +62,7 @@ class ClientWrangler extends EventEmitter {
 	lines: e.data,
 	sendSuccess: (details, cb) => {
 	  if (sock) {
-	    sock.end(`event: replySuccessrndata: ${details}rnrn`, () => {
+	    sock.end(`event: replySuccess\r\ndata: ${details}\r\n\r\n`, () => {
 	      if (cb) { return cb(null); }
 	    });
 	  } else {
@@ -71,7 +71,7 @@ class ClientWrangler extends EventEmitter {
 	},
 	sendError: (msg, cb) => {
 	  if (sock) {
-	    sock.end(`event: replyErrorrndata: ${msg}rnrn`, () => {
+	    sock.end(`event: replyError\r\ndata: ${msg}\r\n\r\n`, () => {
 	      if (cb) { return cb(null); }
 	    });
 	  } else {

@@ -14,10 +14,10 @@ function linesToEventObject() { // convert text to a message
   const emitter = new SSEventEmitter();
 
   const testLines = [
-    "event: updaten",
-    "data: foo = barn",
-    "data: baz = batn",
-    "n",
+    "event: update\n",
+    "data: foo = bar\n",
+    "data: baz = bat\n",
+    "\n",
   ];
 
   const resultUpdate =  {foo: "bar", baz: "bat"};
@@ -28,26 +28,26 @@ function linesToEventObject() { // convert text to a message
     case 'update':
       const result = parseUpdate(e.data);
       if (JSON.stringify(result) == JSON.stringify(resultUpdate)) {
-        process.exit();
+        process.exit(0);
       } else {
-        err(`${JSON.stringify(result)} DID NOT MATCH:n` +
+        err(`${JSON.stringify(result)} DID NOT MATCH:\n` +
             `${JSON.stringify(resultUpdate)}`);
-        process.exit();
+        process.exit(1);
       }
       break;
-    default: process.exit(); break;
+    default: process.exit(1); break;
     }
-    process.exit();
+    process.exit(0);
   });
 
   function parseUpdate(data) {
     let obj = {};
-    (""+data).split(/n|rn/).forEach( line => {
-      const m = line.trim().match(/^(w+)s*=s*(w+)$/);
+    (""+data).split(/\n|\r\n/).forEach( line => {
+      const m = line.trim().match(/^(\w+)\s*\=\s*(\w+)$/);
       if (! m) {
         process.exit(2);
       } else {
-        obj[m[]] = m[2];
+        obj[m[1]] = m[2];
       }
     });
     return obj;
@@ -63,7 +63,7 @@ function linesToEventObject() { // convert text to a message
 function pingPong() {  // send event, and send it back with updated counter
   const ping = new SSEventEmitter();
 
-  let anEvent = { type: "pingpong", data: "nnn" };
+  let anEvent = { type: "pingpong", data: "0\n0\n0\n" };
   const turns = 4; // how many times to ping-pong
 
   const startMilli = new Date();
@@ -72,7 +72,7 @@ function pingPong() {  // send event, and send it back with updated counter
   pong.on('SSEvent', e => {
     // log(`pong got ${JSON.stringify(e)}`);
     if (e.type === "pingpong") {
-      let i = parseInt(e.data, );
+      let i = parseInt(e.data, 10);
       if (i < turns) {
         i++;
         pong.sendEvent({type: "pingpong", data: `${i}`});
@@ -85,7 +85,7 @@ function pingPong() {  // send event, and send it back with updated counter
   ping.on('SSEvent', e => {
     //log(`ping got ${JSON.stringify(e)}`);
     if (e.type === "pingpong") {
-      let i = parseInt(e.data, );
+      let i = parseInt(e.data, 10);
       if (i < turns) {
         i++;
         ping.sendEvent({type: "pingpong", data: `${i}`});

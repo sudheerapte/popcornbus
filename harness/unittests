@@ -1,22 +1,22 @@
 #!/bin/sh -e
-die() { echo "$@"; exit  ; }
+die() { echo "$@"; exit 1 ; }
 
-this=$(readlink -f ${} )
+this=$(readlink -f ${0} )
 here=$(dirname "${this}")
 this=$(basename "${this}")
 
 if [ -z "${OS}" ] ; then
-    NODE="$(find /opt/nodejs -type f -perm / -name node -exec dirname {} + | sort -V | tail -)"/node
+    NODE="$(find /opt/nodejs -type f -perm /111 -name node -exec dirname {} + | sort -V | tail -1)"/node
 else
     NODE=$(which node)
 fi
 
 cd ${here}
-if [ "$#" -gt  ] ; then
+if [ "$#" -gt 0 ] ; then
     tests="$@";
 else
     echo "Running all tests in dir ${here}."
-    tests="$( ls | grep -E '^test-.*.js$' )"
+    tests="$( ls | grep -E '^test-.*\.js$' )"
 fi
 for t in ${tests} ; do
     echo -n "running ${t}... "

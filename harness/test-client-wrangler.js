@@ -15,7 +15,7 @@ function log(s) {
 
 function err(s) {
   console.log(s);
-  process.exit();
+  process.exit(1);
 }
 
 DEBUG=process.env["DEBUG"];
@@ -30,15 +30,15 @@ class OneShotClient {
       read(size) {
 	if (! this._spent) {
 	  log("client sending oneShotCommand")
-	  this.push("event: oneShotCommandndata: foo = barnn");
+	  this.push("event: oneShotCommand\ndata: foo = bar\n\n");
 	  this.push(null);
 	  this._spent = true;
 	}
       },
       write(chunk, encoding, cb) {
-	const m = (""+chunk).match(/^event:s*([^s]+)/);
+	const m = (""+chunk).match(/^event:\s*([^\s]+)/);
 	if (m) {
-	  log(`oneShot client reply ${m[]} - matched`);
+	  log(`oneShot client reply ${m[1]} - matched`);
 	  aTest.oneShotReplyReceived = true;
 	} else {
 	  log(`oneShot client - reply chunk did not match`);
@@ -90,7 +90,7 @@ class FFTest extends EventEmitter {
       read(size) {
 	if (! this._spent) {
 	  log("client sending ff")
-	  this.push("event: fireAndForgetndata: foo = barnn");
+	  this.push("event: fireAndForget\ndata: foo = bar\n\n");
 	  this.push(null);
 	  this._spent = true;
 	}
@@ -129,7 +129,7 @@ class FFHangTest extends EventEmitter {
       read(size) {
 	if (! this._spent) {
 	  log("client sending ff")
-	  this.push("event: fireAndForgetndata: foo = barnn");
+	  this.push("event: fireAndForget\ndata: foo = bar\n\n");
 	  this._spent = true;
 	}
       },
@@ -190,7 +190,7 @@ class AppTest extends EventEmitter {
 	rec.sse.sendEvent({ type: 'pong', data: 'pongdata' });
       });
 
-      setTimeout( () => waitForPang(next), 2 );
+      setTimeout( () => waitForPang(next), 200 );
 
       function waitForPang(cb) { // cb only if not got pang
 	if (! me.gotPang) {
@@ -216,7 +216,7 @@ class AppTest extends EventEmitter {
 
    See ping-pong-pang protocol description above.
 
-   We start the process with a fake "startn" string.
+   We start the process with a fake "start\n" string.
 */
 
 class AppClient {
@@ -230,7 +230,7 @@ class AppClient {
   }
 
   doIt() {
-    this._t.write("startn");
+    this._t.write("start\n");
   }
 
   processWrite(chunk, encoding, cb) {
@@ -238,7 +238,7 @@ class AppClient {
     if (data.match(/^start/)) {
       if (! this._pingSent) {
 	log(`client sending appConnect with ping`);
-	this._t.push("event: appConnectndata: pingnn");
+	this._t.push("event: appConnect\ndata: ping\n\n");
 	this._pingSent = true;
 	cb();
       } else {
@@ -248,7 +248,7 @@ class AppClient {
       if (! this._pingSent) { err("pong before ping sent!"); }
       if (this._pangSent) { err("pong after pang sent!"); }
       log(`client got pong. Sending pang`);
-      this._t.push("event: pangndata: pangdatann");
+      this._t.push("event: pang\ndata: pangdata\n\n");
       this._pangSent = true;
       cb();
     } else {
@@ -278,13 +278,13 @@ function runOneShotTests(next) {
 }
 
 /**
-   The hanging client test  - client never sends a pang
-   The server times it out after 2 ms of inactivity.
+   The hanging client test 1 - client never sends a pang
+   The server times it out after 200 ms of inactivity.
 
    @class(HangingClient) - never send the pang
 */
 
-class HangingClient {
+class HangingClient1 {
   constructor() {
     let me = this;
     this._t = new Stream.Transform({
@@ -296,23 +296,23 @@ class HangingClient {
       this._closed = true;
     });
     process.on('beforeExit', code => {
-      if (code === ) {
+      if (code === 0) {
 	if (! this._closed) {
-	  err("HangingClient was never closed!");
+	  err("HangingClient1 was never closed!");
 	}
       }
     });
   }
   doIt() {
-    log("HangingClient starting.");
-    this._t.write("startn");
+    log("HangingClient1 starting.");
+    this._t.write("start\n");
   }
   processWrite(chunk, encoding, cb) {
     const data = ""+chunk;
     if (data.match(/^start/)) {
       if (! this._pingSent) {
 	log(`client sending appConnect with ping`);
-	this._t.push("event: appConnectndata: pingnn");
+	this._t.push("event: appConnect\ndata: ping\n\n");
 	this._pingSent = true;
 	cb();
       } else {
@@ -332,8 +332,8 @@ class HangingClient {
   }
 }
 
-let hangingClientTest = new AppTest(new HangingClient());
-let hangingClientCompleted;
+let hangingClient1Test = new AppTest(new HangingClient1());
+let hangingClient1Completed;
 
 /**
    The hanging client test 2 - client never waits for pong
@@ -356,7 +356,7 @@ class HangingClient2 {
       this._closed = true;
     });
     process.on('beforeExit', code => {
-      if (code === ) {
+      if (code === 0) {
 	if (this._closed) {
 	  err("HangingClient2 was closed!");
 	}
@@ -365,14 +365,14 @@ class HangingClient2 {
   }
   doIt() {
     log("HangingClient2 starting.");
-    this._t.write("startn");
+    this._t.write("start\n");
   }
   processWrite(chunk, encoding, cb) {
     const data = ""+chunk;
     if (data.match(/^start/)) {
       if (! this._pingSent) {
 	log(`hanging client2 sending appConnect with ping`);
-	this._t.push("event: appConnectndata: pingnn");
+	this._t.push("event: appConnect\ndata: ping\n\n");
 	this._pingSent = true;
 	log(`will hang now and not look for pong`);
 	cb();
@@ -392,8 +392,8 @@ let hangingClient2Test = new AppTest(new HangingClient2());
 let hangingClient2Completed;
 
 function runErrorTests(next) {
-  hangingClientTest.run( () => {
-    hangingClientCompleted = true;
+  hangingClient1Test.run( () => {
+    hangingClient1Completed = true;
     hangingClient2Test.run( () => {
       hangingClient2Completed = true;
       next();
@@ -406,11 +406,11 @@ runOneShotTests( () => {
 });
 
 process.on('beforeExit', code => {
-  if (code === ) {
+  if (code === 0) {
     oneShotTest.beforeExitCheck();
     ffTest.beforeExitCheck();
-    if (! hangingClientCompleted) {
-      err(`hangingClientTest never completed!`);
+    if (! hangingClient1Completed) {
+      err(`hangingClient1Test never completed!`);
     }
     if (! hangingClient2Completed) {
       err(`hangingClient2Test never completed!`);

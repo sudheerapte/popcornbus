@@ -35,7 +35,7 @@ class Dictionary extends EventEmitter {
   constructor() {
     super();
     this._map = new Map();
-    this.setMaxListeners(2);
+    this.setMaxListeners(20);
   }
 
   get(name) {
