@@ -1,0 +1,25 @@
+#!/bin/sh -e
+die() { echo "$@"; exit  ; }
+
+this=$(readlink -f ${} )
+here=$(dirname "${this}")
+this=$(basename "${this}")
+
+if [ -z "${OS}" ] ; then
+    NODE="$(find /opt/nodejs -type f -perm / -name node -exec dirname {} + | sort -V | tail -)"/node
+else
+    NODE=$(which node)
+fi
+
+cd ${here}
+if [ "$#" -gt  ] ; then
+    tests="$@";
+else
+    echo "Running all tests in dir ${here}."
+    tests="$( ls | grep -E '^test-.*.js$' )"
+fi
+for t in ${tests} ; do
+    echo -n "running ${t}... "
+    [ -z ${DEBUG} ] || echo ""
+    ${NODE} "${t}" && echo "OK" || echo "*** FAILED ***"
+done
