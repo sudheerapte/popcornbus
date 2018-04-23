@@ -122,6 +122,7 @@ Subscribing to the four ClientWrangler events:
   the reply along and then close the connection.  The client will see
   a reply SSE event, either 'replySuccess' with any returned data in
   the data field, or 'replyError' with a string in the data field.
+
   The "sendSuccess" and "sendError" functions take two arguments:
   the first argument is a string that the server would like to send,
   and the second is a callback function that client wrangler will call:
