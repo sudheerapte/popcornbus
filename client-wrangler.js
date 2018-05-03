@@ -62,7 +62,10 @@ class ClientWrangler extends EventEmitter {
 	lines: e.data,
 	sendSuccess: (details, cb) => {
 	  if (sock) {
-	    sock.end(`event: replySuccess\r\ndata: ${details}\r\n\r\n`, () => {
+	    let lines = details.split(/\r\n|\n/);
+	    sock.write(`event: replySuccess\n`);
+	    lines.forEach(line => sock.write(`data: ${line}\n`));
+	    sock.end("\n", () => {
 	      if (cb) { return cb(null); }
 	    });
 	  } else {
