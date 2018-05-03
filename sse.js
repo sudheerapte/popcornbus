@@ -59,13 +59,11 @@ class SSEventEmitter extends EventEmitter {
     this.lastEventId = "";
     this.currField = "";
   }
-  
   readFrom(readStream) {
     readStream.on('data', this.consumeData.bind(this) );
     readStream.on('error', this.consumeError.bind(this) );
     readStream.on('close', this.consumeClose.bind(this) );
   }
-
   setWriteStream(writeStream) {
     const me = this; // for binding in callbacks
     this.writeStream = writeStream;
@@ -86,13 +84,11 @@ class SSEventEmitter extends EventEmitter {
     });
     this.writeStream.write(`${buf}\n`);
   }
-
   sendMessage(s) {
     if (! s) { return; }
     if (s.trim().length <= 0) { return; }
     this.sendEvent({type: "message", data: s});
   }
-
   consumeData(data) {
     const str = ""+data;
     if (str.length < 1) { return; }
