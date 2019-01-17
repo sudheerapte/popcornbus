@@ -88,7 +88,6 @@ class SSEventEmitter extends EventEmitter {
   }
   sendEvent(e) {  // must be like this: { type, lastEventId, data }
     if (! this.writeStream) { return; }
-    log(`sendEvent sending ${JSON.stringify(e)}`);
     let buf = "";
     buf += `event: ${e.type}\n`;
     if (e.lastEventId) {
@@ -170,7 +169,6 @@ class SSEventEmitter extends EventEmitter {
     if (this.currEventType) { ev.type = this.currEventType }
     ev.lastEventId = this.lastEventId;
     this.currData = ""; this.currEventType = "";
-    log(`emitting: type = |${ev.type}|`);
     this.emit('SSEvent', ev);
   }
   consumeError(err) {
@@ -182,8 +180,3 @@ class SSEventEmitter extends EventEmitter {
 }
 
 module.exports = SSEventEmitter;
-
-function log(str) {
-  if (! process.env["DEBUG"]) { return; }
-  console.log(`sse: ${str}`);
-}
